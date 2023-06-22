@@ -11,18 +11,20 @@ const jwt = require('jsonwebtoken');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const cookieParser = require('cookie-parser');
+
 const productsRouter = require('./routes/Product');
 const categoriesRouter = require('./routes/Category');
 const brandsRouter = require('./routes/Brands');
 const usersRouter = require('./routes/User');
 const authRouter = require('./routes/Auth');
 const cartRouter = require('./routes/Cart');
-const { isAuth, sanitizeUser, cookieExtractor } = require("./services/common");
 const ordersRouter = require('./routes/Order');
 const { User } = require('./model/User');
-const path=require("path");
+const { isAuth, sanitizeUser, cookieExtractor } = require('./services/common');
+const path = require('path');
 
-server.get('*',(req,res)=>res.sendFile(path.resolve('build','index.html')));
+console.log(process.env)
+
 // Webhook
 
 // TODO: we will capture actual order after deploying out server live on public URL
@@ -70,7 +72,6 @@ opts.secretOrKey = process.env.JWT_SECRET_KEY; // TODO: should not be in code;
 //middlewares
 
 server.use(express.static(path.resolve(__dirname,'build')))
-
 server.use(cookieParser());
 server.use(
   session({
@@ -95,6 +96,8 @@ server.use('/users', isAuth(), usersRouter.router);
 server.use('/auth', authRouter.router);
 server.use('/cart', isAuth(), cartRouter.router);
 server.use('/orders', isAuth(), ordersRouter.router);
+// this line we add to make react router work in case of other routes doesnt match
+server.get('*', (req, res) => res.sendFile(path.resolve('build', 'index.html')));
 
 // Passport Strategies
 passport.use(
@@ -172,7 +175,7 @@ const stripe = require("stripe")(process.env.STRIPE_SERVER_KEY);
 
 
 server.post("/create-payment-intent", async (req, res) => {
-  const { totalAmount,orderId } = req.body;
+  const { totalAmount, orderId } = req.body;
 
   // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
@@ -181,9 +184,9 @@ server.post("/create-payment-intent", async (req, res) => {
     automatic_payment_methods: {
       enabled: true,
     },
-    metaData:{
-      orderId
-    }
+    metadata:{
+        orderId
+      }
   });
 
   res.send({
