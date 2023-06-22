@@ -21,6 +21,8 @@ const { isAuth, sanitizeUser, cookieExtractor } = require("./services/common");
 const ordersRouter = require('./routes/Order');
 const { User } = require('./model/User');
 const path=require("path");
+
+server.get('*',(req,res)=>res.sendFile(path.resolve('build','index.html')));
 // Webhook
 
 // TODO: we will capture actual order after deploying out server live on public URL
@@ -170,7 +172,7 @@ const stripe = require("stripe")(process.env.STRIPE_SERVER_KEY);
 
 
 server.post("/create-payment-intent", async (req, res) => {
-  const { totalAmount } = req.body;
+  const { totalAmount,orderId } = req.body;
 
   // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
@@ -179,6 +181,9 @@ server.post("/create-payment-intent", async (req, res) => {
     automatic_payment_methods: {
       enabled: true,
     },
+    metaData:{
+      orderId
+    }
   });
 
   res.send({
